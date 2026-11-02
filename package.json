@@ -1,0 +1,25 @@
+{
+  "name": "still-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline-first Next.js photobooth with compressed QR video sharing",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0 --port 5173",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0 --port 5173"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.8.2",
+    "next": "^16.4.4",
+    "qrcode": "^1.5.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "overrides": {
+    "zod": "^4.6.7"
+  }
+}
