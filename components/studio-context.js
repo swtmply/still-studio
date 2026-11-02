@@ -10,7 +10,7 @@ export function useStudio() {
 }
 
 export function newSession() {
-  return { id: crypto.randomUUID(), createdAt: Date.now(), shots: [], selected: [], frameId: 'classic', filter: 'color', total: 6, page: 'shoot' };
+  return { id: crypto.randomUUID(), createdAt: Date.now(), shots: [], selected: [], photoCount: 4, layoutId: 'strip-4', frameId: 'classic', filter: 'color', total: 6, page: 'shoot' };
 }
 
 export function PageIntro({ eyebrow, title, children }) {

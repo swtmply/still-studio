@@ -13,7 +13,7 @@ import { readDraft, saveDraft } from '../lib/storage';
 
 const steps = [
   { id: 'shoot', label: 'Take your shots' },
-  { id: 'select', label: 'Pick your four' },
+  { id: 'select', label: 'Pick your photos' },
   { id: 'style', label: 'Make it yours' },
   { id: 'share', label: 'Keep the moment' },
 ];
@@ -30,7 +30,7 @@ export default function Studio() {
   let page = steps.some((step) => pathname === `/${step.id}`) ? pathname.slice(1) : 'shoot';
   if (session) {
     if (page !== 'shoot' && session.shots.length < 4) page = 'shoot';
-    else if (['style', 'share'].includes(page) && session.selected.length !== 4) page = 'select';
+    else if (['style', 'share'].includes(page) && session.selected.length !== (session.photoCount || 4)) page = 'select';
     else if (page === 'share' && !session.blob) page = 'style';
   }
 

@@ -2,10 +2,10 @@
 
 An offline-first Next.js photobooth with four separate pages:
 
-1. **Shoot** (`/shoot`): live camera, 4–6 shots, and a three-second video with every photo. Captured-photo previews stay hidden.
-2. **Select** (`/select`): pick exactly four photos in strip order.
-3. **Style** (`/style`): choose a frame and original, monochrome, or warm finish.
-4. **Share** (`/share`): download the original PNG and scan an unlisted QR link for the four selected video moments.
+1. **Shoot** (`/shoot`): live camera, up to eight shots, and a three-second video with every photo. Captured-photo previews stay hidden.
+2. **Select** (`/select`): choose a 4-, 6-, or 8-photo set, then pick your favorites in print order.
+3. **Style** (`/style`): choose among eight layouts, twelve frames, and nine photo finishes. Layout, Frame, and Filter tabs keep the options manageable.
+4. **Share** (`/share`): download the original PNG and scan an unlisted QR link for the selected video moments.
 
 ## Run
 
@@ -23,18 +23,28 @@ npm run build
 npm start
 ```
 
+## Layouts and styles
+
+- **Four photos:** Classic strip (1 × 4), Square quartet (2 × 2), Photo row (4 × 1).
+- **Six photos:** Six together (2 × 3), Wide six (3 × 2), Long story (1 × 6).
+- **Eight photos:** Eight moments (2 × 4), Memory board (4 × 2).
+- **Frames:** Classic, Midnight, Petal, Butter, Olive, Postcard, Sakura, Ocean, Gingham, Confetti, Starlight, Film club.
+- **Filters:** Original, B & W, Warm, Vintage, Cool, Faded, Noir, Rose, Golden.
+
+Photos are centered and cropped to fit each layout. The preview and PNG use the same renderer, including patterned frames. A saved session without a photo count or layout uses the original four-photo classic strip. Changing photo count preserves the first selected photos that still fit; you can capture more shots if needed.
+
 ## Storage and smaller files
 
 Capture, selections, and styling stay in IndexedDB on the device. Completed strips remain in **My strips**. Refreshing restores the current session; starting a new session replaces that draft. Clearing browser data can remove local copies, so download favorites.
 
-Only the four selected clips and the finished shared strip are uploaded on the sharing page:
+Only the 4, 6, or 8 selected clips and the finished shared print are uploaded on the sharing page:
 
 - Videos: **720 × 480, 15 fps, approximately 800 kbps**, three seconds each, no audio. MP4 is preferred when supported; WebM is the fallback.
-- Shared strip: **600 × 1800 JPEG**, quality 0.8. Individual captured images and unselected clips are not uploaded.
-- Local download: the original **1200 × 3600 PNG** is preserved for printing at 2 × 6 inches.
+- Shared strip: **JPEG with a maximum 1800-pixel edge**, quality 0.8, preserving the chosen layout’s aspect ratio (600 × 1800 for the classic strip). Individual captured images and unselected clips are not uploaded.
+- Local download: a full-resolution PNG is preserved for each layout. The classic four-photo strip remains **1200 × 3600**; grid, wide, and six-photo strip layouts use their own dimensions.
 - A shared session is capped below **4 MB**, with individual shared files limited to 900 KB. This stays within Vercel Functions' request limit and bounds storage use. Video encoders vary, so oversized recordings show a retry/download message rather than uploading without limits.
 
-The default recording target is roughly 300 KB per clip, or about 1.2 MB for four clips before the JPEG and container overhead. Real file sizes depend on motion and the browser's encoder.
+The default recording target is roughly 300 KB per clip, or about 1.2 MB for four clips / 2.4 MB for eight clips before the JPEG and container overhead. Real file sizes depend on motion and the browser's encoder.
 
 ## Vercel Blob (Hobby)
 
@@ -42,7 +52,7 @@ The hosted app uses a **private Vercel Blob store**, connected to the project fo
 
 At setup, Hobby includes **1 GB storage and 10 GB Blob data transfer per month**, plus operation limits. See the current [Blob pricing](https://vercel.com/docs/vercel-blob/usage-and-pricing) and [Hobby plan](https://vercel.com/docs/plans/hobby). Hobby is intended for personal, non-commercial projects. No paid upgrade or paid feature is enabled by this project. The included allowance is finite: check usage before events or wider public use.
 
-Each completed share stores four clips, one JPEG, and a small manifest. Uploaded files are private; the application serves them only through random, unlisted session URLs. Anyone holding a session link can view that session. The public repository contains code, never browser photos, `.data`, build artifacts, or environment credentials.
+Each completed share stores 4, 6, or 8 clips, one JPEG, and a small manifest. Uploaded files are private; the application serves them only through random, unlisted session URLs. Anyone holding a session link can view that session. The public repository contains code, never browser photos, `.data`, build artifacts, or environment credentials.
 
 Shared sessions persist until removed from Blob storage. No automatic retention/deletion policy is configured. Deleting a strip in **My strips** deletes only the browser copy, not an already-shared session. The Vercel storage dashboard can manage those shared copies.
 
@@ -71,7 +81,7 @@ For local development against the hosted store, link the intended Vercel project
 - `app/[[...step]]/page.js`: Next.js routes for the four studio steps.
 - `components/`: React studio pages, session state, gallery, and phone viewer.
 - `lib/media.js`: camera capture and reduced-size video recording.
-- `lib/strip.js`: built-in frames, finishes, and original PNG export.
+- `lib/strip.js`: shared layout geometry, twelve frame designs, nine finishes, and the canvas renderer used by both live previews and original PNG exports.
 - `lib/compress.js`: smaller JPEG for sharing.
 - `lib/storage.js`: browser session/gallery storage; existing records are preserved.
 - `lib/shares.js`: private Blob storage and local-file fallback.
