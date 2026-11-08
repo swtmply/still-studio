@@ -1,4 +1,4 @@
-const CACHE = 'still-studio-next-v3';
+const CACHE = 'still-studio-next-v4';
 const PAGES = ['/', '/shoot', '/select', '/style', '/share'];
 
 self.addEventListener('install', (event) => {

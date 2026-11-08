@@ -5,7 +5,7 @@ An offline-first Next.js photobooth with four separate pages:
 1. **Shoot** (`/shoot`): live camera, up to eight shots, and a three-second video with every photo. Captured-photo previews stay hidden.
 2. **Select** (`/select`): choose a 4-, 6-, or 8-photo set, then pick your favorites in print order.
 3. **Style** (`/style`): choose among eight layouts, twelve frames, and nine photo finishes. Layout, Frame, and Filter tabs keep the options manageable.
-4. **Share** (`/share`): download the original PNG and scan an unlisted QR link for the selected video moments.
+4. **Share** (`/share`): print or download the original PNG and scan an unlisted QR link for the selected video moments.
 
 ## Run
 
@@ -34,6 +34,8 @@ npm start
 Photos are centered and cropped to fit each layout. The preview and PNG use the same renderer, including patterned frames. A saved session without a photo count or layout uses the original four-photo classic strip. Changing photo count preserves the first selected photos that still fit; you can capture more shots if needed.
 
 ## Storage and smaller files
+
+**Print this moment** opens the browser's print dialog with only the finished image. Paper size follows the selected layout at 600 pixels per inch: Classic strip 2 × 6 in, Square quartet 3 × 3 in, Photo row 6 × 2.25 in, Six together 4 × 5 in, Wide six 5 × 3.5 in, Long story 2 × 8.5 in, Eight moments 4 × 6.2 in, and Memory board 6 × 4 in. The size is shown beside the button. Choose a printer and paper that support that size, use 100% scale and no margins, and disable headers and footers. Printer drivers can override the requested paper size; use fit-to-paper if printing on another size. Printing uses the original local PNG and works without uploading or an internet connection. The browser requires printer selection in its dialog; automatic routing to dedicated printers would need a local print service.
 
 Capture, selections, and styling stay in IndexedDB on the device. Completed strips remain in **My strips**. Refreshing restores the current session; starting a new session replaces that draft. Clearing browser data can remove local copies, so download favorites.
 

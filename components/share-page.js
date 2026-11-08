@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { compressStrip } from '../lib/compress';
+import { getLayout } from '../lib/strip';
+import { getPrintSize, printMoment } from '../lib/print';
 import { useStudio, PageIntro } from './studio-context';
 import { Icon } from './icon';
 
@@ -13,6 +15,32 @@ export default function SharePage() {
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const request = useRef(null);
+  const printFrame = useRef(null);
+  const [printing, setPrinting] = useState(false);
+  const [printError, setPrintError] = useState('');
+  const layout = getLayout(session.selected.length, session.layoutId);
+  const printSize = getPrintSize(layout);
+
+  useEffect(() => () => printFrame.current?.remove(), []);
+
+  async function print() {
+    setPrinting(true);
+    setPrintError('');
+    printFrame.current?.remove();
+    const frame = document.createElement('iframe');
+    frame.title = 'Photo print';
+    frame.className = 'photo-print-frame';
+    frame.setAttribute('aria-hidden', 'true');
+    frame.tabIndex = -1;
+    printFrame.current = frame;
+    document.body.append(frame);
+    frame.contentWindow?.addEventListener('afterprint', () => frame.remove(), { once: true });
+    try { await printMoment(frame, imageUrl, layout); }
+    catch (error) {
+      frame.remove();
+      setPrintError(error instanceof Error ? error.message : 'Could not open printing. Save the photo print and print it from your device.');
+    } finally { setPrinting(false); }
+  }
 
   useEffect(() => {
     const url = URL.createObjectURL(session.blob);
@@ -61,7 +89,7 @@ export default function SharePage() {
 
   return <section id="page-share" className="page">
     <PageIntro eyebrow="A LITTLE MEMORY, TO GO" title={<>That’s <em>a keeper.</em></>}>Your {session.selected.length} photos, and the little moments that made them.</PageIntro>
-    <div className="share-layout"><div className="finished-strip">{imageUrl && <img src={imageUrl} alt="Your finished photo print"/>}<a className="outline-button" href={imageUrl} download={`still-${session.id}.png`}><Icon name="download"/>Save photo print</a></div><div className="qr-card"><span className="eyebrow">TAKE THE MOMENT WITH YOU</span><h2>Scan. Smile. <em>Replay.</em></h2>{share ? <img className="qr-image" src={share.qr} alt="Scan to watch your selected three-second videos"/> : !failed ? <div className="qr-placeholder"><Icon name="spark"/><p>Preparing your little moments…</p></div> : null}<p id="share-status" role="status">{status}</p>{share && <a id="share-link" href={share.url} target="_blank" rel="noopener">Open your video moments ↗</a>}{failed && <button className="outline-button" onClick={() => setAttempt((current) => current + 1)}>Try sharing again</button>}<div className="wifi-note"><Icon name="lock"/><span>{share?.local || (!share && localSharing) ? 'No internet needed for local sharing. Keep the booth running and stay on the same Wi-Fi.' : 'Only your selected clips and a smaller print are uploaded. Anyone with this unlisted link can view them.'}</span></div></div></div>
+    <div className="share-layout"><div className="finished-strip">{imageUrl && <img src={imageUrl} alt="Your finished photo print"/>}<div className="print-actions"><button className="primary-button" onClick={print} disabled={!imageUrl || printing}><Icon name="printer"/>{printing ? 'Opening print dialog…' : 'Print this moment'}</button><p className="print-size">{printSize.width} × {printSize.height} in · {layout.name}</p><p className="printer-hint">Choose the printer with this paper size. Use 100% scale, no margins, and turn off headers and footers.</p>{printError && <p className="print-error" role="alert">{printError}</p>}<a className="outline-button" href={imageUrl} download={`still-${session.id}.png`}><Icon name="download"/>Save photo print</a></div></div><div className="qr-card"><span className="eyebrow">TAKE THE MOMENT WITH YOU</span><h2>Scan. Smile. <em>Replay.</em></h2>{share ? <img className="qr-image" src={share.qr} alt="Scan to watch your selected three-second videos"/> : !failed ? <div className="qr-placeholder"><Icon name="spark"/><p>Preparing your little moments…</p></div> : null}<p id="share-status" role="status">{status}</p>{share && <a id="share-link" href={share.url} target="_blank" rel="noopener">Open your video moments ↗</a>}{failed && <button className="outline-button" onClick={() => setAttempt((current) => current + 1)}>Try sharing again</button>}<div className="wifi-note"><Icon name="lock"/><span>{share?.local || (!share && localSharing) ? 'No internet needed for local sharing. Keep the booth running and stay on the same Wi-Fi.' : 'Only your selected clips and a smaller print are uploaded. Anyone with this unlisted link can view them.'}</span></div></div></div>
     <div className="page-actions"><button className="text-button" onClick={() => go('style')}>← Change frame or filter</button><button className="primary-button" onClick={reset}>Start a new session <Icon name="camera"/></button></div>
   </section>;
 }
