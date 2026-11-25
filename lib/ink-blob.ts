@@ -1,5 +1,5 @@
 import { BlobNotFoundError, get, head, list } from '@vercel/blob';
-import { inkLayout, type InkFrame } from './ink-layouts';
+import { inkLayout, type InkUpload } from './ink-layouts';
 import { shareError } from './shares';
 
 export const NO_STORE = { 'Cache-Control': 'private, no-store' };
@@ -22,17 +22,21 @@ export function sameOrigin(request: Request) {
   return origin;
 }
 
-export function frameInfo(pathname: string): InkFrame | null {
+export function frameInfo(pathname: string, version?: string): InkUpload | null {
   const match = /^ink\/frames\/(six|four|one)\/([a-z0-9-]{1,48})-([a-f0-9]{16})\.png$/.exec(pathname);
   const layout = match && inkLayout(match[1]);
   if (!match || !layout) return null;
   const [, , name, id] = match;
-  return { id, name: name.replaceAll('-', ' '), layout: layout.id, url: '/api/ink/frames/' + pathname.slice(FRAME_PREFIX.length) };
+  const url = '/api/ink/frames/' + pathname.slice(FRAME_PREFIX.length);
+  return { kind: 'upload', id, name: name.replaceAll('-', ' '), layout: layout.id, url: version ? url + '?v=' + encodeURIComponent(version) : url };
 }
 
-export async function listFrames() {
+export async function listUploadedFrames() {
   const { blobs } = await list({ prefix: FRAME_PREFIX, limit: FRAME_LIMIT + 1 });
-  return blobs.flatMap(({ pathname }) => frameInfo(pathname) ?? []);
+  return blobs.flatMap((blob) => {
+    const frame = frameInfo(blob.pathname, blob.etag);
+    return frame ? [{ ...blob, frame }] : [];
+  });
 }
 
 export async function blobExists(pathname: string) {
@@ -48,7 +52,7 @@ export async function blobExists(pathname: string) {
 export async function serveInkBlob(pathname: string, contentType: string, expiresAt = Infinity) {
   if (Date.now() >= expiresAt) return new Response(null, { status: 410, headers: NO_STORE });
   try {
-    const blob = await get(pathname, { access: 'private' });
+    const blob = await get(pathname, { access: 'private', useCache: expiresAt !== Infinity });
     if (!blob || blob.statusCode !== 200) return new Response(null, { status: 404, headers: NO_STORE });
     if (Date.now() >= expiresAt) {
       await blob.stream.cancel();

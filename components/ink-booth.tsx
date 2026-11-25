@@ -3,15 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Camera, Check, Printer } from 'lucide-react';
 import { InkCamera } from '@/components/ink-camera';
-import { PostcardGuide } from '@/components/postcard-guide';
+import { InkDesign } from '@/components/ink-design';
 import { Button } from '@/components/ui/button';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { inkLayouts, POSTCARD, type InkFrame, type InkLayout } from '@/lib/ink-layouts';
 import type { InkShot } from '@/lib/ink-capture';
-import { renderInkGif, renderInkPrint } from '@/lib/ink-render';
+import { renderInkGif, renderInkPrint, type InkOverlay } from '@/lib/ink-render';
 import { printMoment } from '@/lib/print';
-import { filterOptions } from '@/lib/strip';
 import { cn } from '@/lib/utils';
 
 type Step = 'welcome' | 'design' | 'camera' | 'select' | 'preview' | 'share';
@@ -41,7 +38,8 @@ export function InkBooth() {
   const [frameError, setFrameError] = useState('');
   const heading = useRef<HTMLHeadingElement>(null);
   const printFrame = useRef<HTMLIFrameElement | null>(null);
-  const frame = frames.find((item) => item.id === frameId && item.layout === layout.id);
+  const printOverlay = useRef<InkOverlay>(null);
+  const frame = frames.find((item) => item.id === frameId && (item.kind === 'preset' || item.layout === layout.id));
 
   useEffect(() => {
     heading.current?.focus();
@@ -55,20 +53,20 @@ export function InkBooth() {
     setStep(next);
   }
 
-  async function start() {
+  async function loadFrames() {
     setFrameError('');
-    go('design');
     try {
       const response = await fetch('/api/ink/frames', { cache: 'no-store' });
       if (!response.ok) throw new Error();
       setFrames(await response.json());
     } catch {
-      setFrameError('Custom frames could not load. You can still use Full bleed.');
+      setFrameError('The frame library could not load. You can still use Full bleed.');
     }
   }
 
   function reset() {
     printFrame.current?.remove();
+    printOverlay.current = null;
     setLayout(inkLayouts[0]);
     setFrameId('');
     setFilter('color');
@@ -90,7 +88,9 @@ export function InkBooth() {
     setBusy(true);
     setError('');
     try {
-      setPrint(await renderInkPrint(selected.map((index) => shots[index]), layout, filter, frame?.url));
+      const { image, overlay } = await renderInkPrint(selected.map((index) => shots[index]), layout, filter, frame);
+      printOverlay.current = overlay;
+      setPrint(image);
       go('preview');
     } catch {
       setError('Could not build the preview. Make sure your frame is available and try again.');
@@ -101,7 +101,7 @@ export function InkBooth() {
     setBusy(true);
     setError('');
     try {
-      const gif = await renderInkGif(selected.map((index) => shots[index]), layout, filter, frame?.url);
+      const gif = await renderInkGif(selected.map((index) => shots[index]), layout, filter, printOverlay.current);
       const form = new FormData();
       form.append('gif', gif, 'postcard.gif');
       const response = await fetch('/api/ink/share', { method: 'POST', body: form, signal: AbortSignal.timeout(60_000) });
@@ -143,40 +143,18 @@ export function InkBooth() {
         {step === 'welcome' ? <section className="ink-hero">
           <div className="ink-hero-copy">
             <h1 ref={heading} tabIndex={-1}>Moments<br /><em>in Ink.</em></h1>
-            <Button size="lg" className="min-h-12 w-fit" onClick={start}><Camera data-icon="inline-start" />Capture the Moment<ArrowRight data-icon="inline-end" /></Button>
+            <Button size="lg" className="min-h-12 w-fit" onClick={() => { go('design'); void loadFrames(); }}><Camera data-icon="inline-start" />Capture the Moment<ArrowRight data-icon="inline-end" /></Button>
           </div>
           <img className="ink-hero-art" src="/ink-booth.webp" alt="Photobooth prints scattered on crimson fabric beside a vintage flash" />
         </section> : <section className="mx-auto flex w-full max-w-3xl flex-col gap-7">
           <h1 ref={heading} tabIndex={-1} className="ink-title">{stepTitles[step]}</h1>
           {step === 'design' && <>
-            <div className="ink-design">
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="ink-layout">Layout</FieldLabel>
-                  <NativeSelect id="ink-layout" value={layout.id} onChange={(event) => {
-                    setLayout(inkLayouts.find((item) => item.id === event.target.value) ?? inkLayouts[0]);
-                    setFrameId('');
-                  }}>
-                    {inkLayouts.map((item) => <NativeSelectOption key={item.id} value={item.id}>{item.label}</NativeSelectOption>)}
-                  </NativeSelect>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="ink-frame">Frame</FieldLabel>
-                  <NativeSelect id="ink-frame" value={frameId} onChange={(event) => setFrameId(event.target.value)}>
-                    <NativeSelectOption value="">Full bleed</NativeSelectOption>
-                    {frames.filter((item) => item.layout === layout.id).map((item) => <NativeSelectOption key={item.id} value={item.id}>{item.name}</NativeSelectOption>)}
-                  </NativeSelect>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="ink-filter">Filter</FieldLabel>
-                  <NativeSelect id="ink-filter" value={filter} onChange={(event) => setFilter(event.target.value)}>
-                    {filterOptions.map((item) => <NativeSelectOption key={item.id} value={item.id}>{item.name}</NativeSelectOption>)}
-                  </NativeSelect>
-                </Field>
-                {frameError && <p role="status" className="m-0 text-sm text-muted-foreground">{frameError}</p>}
-              </FieldGroup>
-              <PostcardGuide layout={layout} overlay={frame?.url} />
-            </div>
+            <InkDesign layout={layout} frame={frame} frames={frames} filter={filter} frameError={frameError} retryFrames={loadFrames}
+              onLayout={(next) => {
+                setLayout(next);
+                if (frame?.kind === 'upload' && frame.layout !== next.id) setFrameId('');
+              }}
+              onFrame={setFrameId} onFilter={setFilter} />
             <div className="flex flex-wrap justify-between gap-3">
               <Button variant="outline" onClick={reset}>Back</Button>
               <Button size="lg" onClick={() => go('camera')}>Continue to camera <ArrowRight data-icon="inline-end" /></Button>

@@ -10,7 +10,9 @@ export const inkLayouts = [
 ] as const;
 
 export type InkLayout = (typeof inkLayouts)[number];
-export type InkFrame = { id: string; name: string; layout: InkLayout['id']; url: string };
+export type InkUpload = { kind: 'upload'; id: string; name: string; layout: InkLayout['id']; url: string };
+export type InkPreset = { kind: 'preset'; id: string; name: string; design: string };
+export type InkFrame = InkUpload | InkPreset;
 
 export function inkLayout(id: FormDataEntryValue | null) {
   return inkLayouts.find((layout) => layout.id === id);

@@ -382,11 +382,8 @@ a.outline-button, a.primary-button { text-decoration: none; }
 .ink-hero-art { display: block; width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: .3rem; background: #781f2b; }
 .ink-title { margin: 0; font: 400 clamp(2.35rem, 6vw, 4.4rem)/1 var(--serif); letter-spacing: -.06em; }
 .ink-design, .ink-review { display: grid; gap: 1.5rem; align-items: start; }
-.ink-guide, .ink-postcard { max-width: min(100%, 18rem); margin-inline: auto; display: block; }
-.ink-guide { position: relative; display: grid; aspect-ratio: 1110/1710; background: #efdcd1; }
-.ink-guide span { display: grid; place-items: center; border: 1px solid #fcf6e9; color: #8a625a; }
-.ink-guide img { position: absolute; inset: 0; width: 100%; height: 100%; }
-.ink-postcard { width: min(100%, 21rem); height: auto; box-shadow: 0 .7rem 1.75rem #49212328; }
+.ink-sample { object-position: 68% 57%; }
+.ink-postcard { display: block; margin-inline: auto; width: min(100%, 21rem); height: auto; box-shadow: 0 .7rem 1.75rem #49212328; }
 .ink-review .ink-postcard { max-width: 100%; }
 .ink-camera > svg { width: 3rem; height: 3rem; }
 .ink-countdown { position: absolute; place-self: center; font: 700 clamp(3.5rem, 12vw, 8rem)/1 var(--serif); text-shadow: 0 .12em .35em #2d1918; }
@@ -394,6 +391,8 @@ a.outline-button, a.primary-button { text-decoration: none; }
 @media (min-width: 680px) {
   .ink-hero { grid-template-columns: .95fr 1fr; }
   .ink-design, .ink-review { grid-template-columns: 1fr 1fr; gap: clamp(2rem, 6vw, 4rem); }
+  .ink-design-picker { grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 2rem; }
+  .ink-design-picker figure { position: sticky; top: 1rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ink-shell button { transition: none; }

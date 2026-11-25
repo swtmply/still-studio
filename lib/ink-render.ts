@@ -1,6 +1,8 @@
-import { filters } from './strip';
-import { GIF_MAX_BYTES, POSTCARD, type InkLayout } from './ink-layouts';
+import { drawFrame, filters, frames } from './strip';
+import { GIF_MAX_BYTES, POSTCARD, type InkFrame, type InkLayout } from './ink-layouts';
 import { GIF_FRAMES, GIF_FRAME_MS, type InkShot } from './ink-capture';
+
+export type InkOverlay = HTMLImageElement | HTMLCanvasElement | null;
 
 function canvasAt(width: number, height: number) {
   const canvas = document.createElement('canvas');
@@ -18,6 +20,36 @@ async function loadImage(src: string) {
   return image;
 }
 
+export function drawInkPreset(canvas: HTMLCanvasElement, design: string, layout: InkLayout) {
+  const context = canvas.getContext('2d');
+  const frame = frames.find((item) => item.id === design);
+  if (!context || !frame) return;
+  const { width, height } = POSTCARD;
+  const edge = 34;
+  const gap = 22;
+  const cellWidth = width / layout.columns;
+  const cellHeight = height / layout.rows;
+  context.setTransform(canvas.width / width, 0, 0, canvas.height / height, 0, 0);
+  drawFrame(context, frame, { width, height, margin: 100 });
+  for (let row = 0; row < layout.rows; row++) {
+    for (let column = 0; column < layout.columns; column++) {
+      const left = column === 0 ? edge : gap / 2;
+      const right = column === layout.columns - 1 ? edge : gap / 2;
+      const top = row === 0 ? edge : gap / 2;
+      const bottom = row === layout.rows - 1 ? edge : gap / 2;
+      context.clearRect(column * cellWidth + left, row * cellHeight + top, cellWidth - left - right, cellHeight - top - bottom);
+    }
+  }
+}
+
+async function loadFrame(frame: InkFrame | undefined, layout: InkLayout) {
+  if (!frame) return null;
+  if (frame.kind === 'upload') return loadImage(frame.url);
+  const { canvas } = canvasAt(POSTCARD.width, POSTCARD.height);
+  drawInkPreset(canvas, frame.design, layout);
+  return canvas;
+}
+
 function paintCell(context: CanvasRenderingContext2D, image: HTMLImageElement | HTMLCanvasElement, index: number, layout: InkLayout) {
   const { width, height } = context.canvas;
   const column = index % layout.columns;
@@ -32,18 +64,18 @@ function paintCell(context: CanvasRenderingContext2D, image: HTMLImageElement | 
   context.drawImage(image, (image.width - sourceWidth) / 2, (image.height - sourceHeight) / 2, sourceWidth, sourceHeight, x, y, w, h);
 }
 
-export async function renderInkPrint(shots: InkShot[], layout: InkLayout, filter: string, overlay?: string) {
-  const [images, frame] = await Promise.all([Promise.all(shots.map(({ photo }) => loadImage(photo))), overlay ? loadImage(overlay) : null]);
+export async function renderInkPrint(shots: InkShot[], layout: InkLayout, filter: string, overlay?: InkFrame) {
+  const [images, frame] = await Promise.all([Promise.all(shots.map(({ photo }) => loadImage(photo))), loadFrame(overlay, layout)]);
   const { canvas, context } = canvasAt(POSTCARD.width, POSTCARD.height);
   context.filter = filters[filter] ?? 'none';
   images.forEach((image, i) => paintCell(context, image, i, layout));
   context.filter = 'none';
   if (frame) context.drawImage(frame, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL('image/png');
+  return { image: canvas.toDataURL('image/png'), overlay: frame };
 }
 
-export async function renderInkGif(shots: InkShot[], layout: InkLayout, filter: string, overlay?: string) {
-  const [{ GIFEncoder, quantize, applyPalette }, frame] = await Promise.all([import('gifenc'), overlay ? loadImage(overlay) : null]);
+export async function renderInkGif(shots: InkShot[], layout: InkLayout, filter: string, frame: InkOverlay) {
+  const { GIFEncoder, quantize, applyPalette } = await import('gifenc');
   const sample = shots[0].frames[0];
   const scratch = canvasAt(sample.width, sample.height);
   for (const [width, height] of [[185, 285], [148, 228]]) {
