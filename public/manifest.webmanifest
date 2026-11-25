@@ -1,7 +1,7 @@
 {
-  "name": "Still Studio",
-  "short_name": "Still",
-  "description": "Four, six, or eight photos. One little keepsake. Your offline photobooth.",
+  "name": "Moments in Ink",
+  "short_name": "Moments in Ink",
+  "description": "Postcard prints and animated photobooth keepsakes.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f7f5ef",

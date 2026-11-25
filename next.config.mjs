@@ -1,4 +1,7 @@
+import { withWorkflow } from 'workflow/next';
+
 const config = {
+  reactCompiler: true,
   async headers() {
     return [
       { source: '/:path*', headers: [
@@ -13,4 +16,4 @@ const config = {
     ];
   },
 };
-export default config;
+export default withWorkflow(config);

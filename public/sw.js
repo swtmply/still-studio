@@ -1,5 +1,5 @@
-const CACHE = 'still-studio-next-v4';
-const PAGES = ['/', '/shoot', '/select', '/style', '/share'];
+const CACHE = 'still-studio-next-v5';
+const PAGES = ['/shoot', '/select', '/style', '/share'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {

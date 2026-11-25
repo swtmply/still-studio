@@ -1,7 +1,11 @@
 node_modules/
+*.tsbuildinfo
+next-env.d.ts
+.workflow-data/
 .data/
 .next/
 .vercel/
 .env*
 !.env.example
 *.log
+/.swc

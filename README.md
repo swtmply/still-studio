@@ -1,6 +1,14 @@
-# Still Studio
+# Moments in Ink
 
-An offline-first Next.js photobooth with four separate pages:
+The online booth at `/` prints borderless 3.7 × 5.7 in portrait postcards. Choose a 2 × 3, 2 × 2, or single-photo layout, then take eight photos with ten seconds between shots. Confirm the preview to create an online GIF share. **Finish and return to welcome** clears the booth after guests have had time to scan or print.
+
+- **Frames:** `/admin/frames` accepts transparent portrait PNG overlays, exactly 1110 × 1710 px and up to 2 MB. The page shows cell dimensions for each layout. Frame uploads require a randomly generated server-side `INK_ADMIN_TOKEN` of at least 32 characters. Uploaded templates remain available to the booth until removed from the Blob dashboard under `ink/frames/`.
+- **Shares:** One private GIF per postcard, capped at 450 KB. Both the viewer and media URL stop serving it after six hours. Vercel Workflow schedules deletion at that time. Blob’s one-day native TTL provides a fallback. The production app needs a private Vercel Blob connection and Vercel Workflows. Local workflow execution is intended for development and requires the local worker to be running.
+- **Printing:** The print document contains only the postcard at zero CSS margins, without any printed branding, timestamp, or URL in the image. In the print dialog, use matching paper, 100% scale, and the printer’s borderless preset. Turn off the browser’s **Headers and footers** setting if it adds them.
+
+## Original offline booth
+
+The original Still Studio flow remains available at `/shoot`, with four separate pages:
 
 1. **Shoot** (`/shoot`): live camera, up to eight shots, and a three-second video with every photo. Captured-photo previews stay hidden.
 2. **Select** (`/select`): choose a 4-, 6-, or 8-photo set, then pick your favorites in print order.
@@ -80,7 +88,7 @@ For local development against the hosted store, link the intended Vercel project
 
 ## Structure
 
-- `app/[[...step]]/page.js`: Next.js routes for the four studio steps.
+- `app/[...step]/page.js`: routes for the four original offline studio steps.
 - `components/`: React studio pages, session state, gallery, and phone viewer.
 - `lib/media.js`: camera capture and reduced-size video recording.
 - `lib/strip.js`: shared layout geometry, twelve frame designs, nine finishes, and the canvas renderer used by both live previews and original PNG exports.

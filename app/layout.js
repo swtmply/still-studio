@@ -1,8 +1,8 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Still Studio — A moment to keep',
-  description: 'An offline-first photobooth. Take up to eight shots, choose a 4, 6, or 8-photo layout, and share your video moments.',
+  title: 'Moments in Ink',
+  description: 'An online photobooth for postcard prints and short animated keepsakes.',
   manifest: '/manifest.webmanifest',
   icons: { icon: '/icon.svg' },
 };

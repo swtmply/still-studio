@@ -1,3 +1,24 @@
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline {
+  --color-background: #fcf6e9;
+  --color-foreground: #2d1918;
+  --color-primary: #941c35;
+  --color-primary-foreground: #fff8ec;
+  --color-secondary: #f1dfd6;
+  --color-secondary-foreground: #451f24;
+  --color-muted: #f2e7d9;
+  --color-muted-foreground: #725654;
+  --color-accent: #f1dfd6;
+  --color-accent-foreground: #451f24;
+  --color-border: #dcc6b9;
+  --color-input: #bf9b8d;
+  --color-ring: #941c35;
+  --color-destructive: #9e1831;
+}
+
 :root {
   font-family: Arial, Helvetica, sans-serif;
   color: #302f2b;
@@ -329,4 +350,51 @@ a.outline-button, a.primary-button { text-decoration: none; }
   .rendered-preview>img { max-height: 570px; }
   .share-layout { display: flex; }
   .finished-strip>img { width: auto; height: auto; max-width: min(100%, 300px); max-height: 560px; }
+}
+
+@layer base {
+  .ink-shell [data-slot="button"] { border: 0; text-decoration: none; }
+  .ink-shell [data-variant="outline"] { border: 1px solid var(--color-border); }
+}
+
+.ink-shell { font-family: Arial, Helvetica, sans-serif; }
+.ink-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  max-width: 78rem;
+  margin: auto;
+  padding: 1.15rem clamp(1.25rem, 5vw, 4.5rem);
+  border-bottom: 1px solid #dcc6b9;
+}
+.ink-wordmark {
+  font: 700 clamp(1.2rem, 4vw, 1.65rem)/1 var(--serif);
+  letter-spacing: -.035em;
+  text-decoration: none;
+}
+.ink-wordmark em { color: #941c35; }
+.ink-main { max-width: 78rem; min-height: auto; padding: clamp(2.25rem, 7vw, 5rem) clamp(1.25rem, 5vw, 4.5rem); }
+.ink-hero { display: grid; gap: clamp(2.5rem, 6vw, 5rem); align-items: center; }
+.ink-hero-copy { display: flex; flex-direction: column; gap: 1.85rem; }
+.ink-hero h1 { margin: 0; font: 400 clamp(4.1rem, 10vw, 9.5rem)/.86 var(--serif); letter-spacing: -.092em; }
+.ink-hero h1 em { color: #941c35; font-weight: 400; }
+.ink-hero-art { display: block; width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: .3rem; background: #781f2b; }
+.ink-title { margin: 0; font: 400 clamp(2.35rem, 6vw, 4.4rem)/1 var(--serif); letter-spacing: -.06em; }
+.ink-design, .ink-review { display: grid; gap: 1.5rem; align-items: start; }
+.ink-guide, .ink-postcard { max-width: min(100%, 18rem); margin-inline: auto; display: block; }
+.ink-guide { position: relative; display: grid; aspect-ratio: 1110/1710; background: #efdcd1; }
+.ink-guide span { display: grid; place-items: center; border: 1px solid #fcf6e9; color: #8a625a; }
+.ink-guide img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ink-postcard { width: min(100%, 21rem); height: auto; box-shadow: 0 .7rem 1.75rem #49212328; }
+.ink-review .ink-postcard { max-width: 100%; }
+.ink-camera > svg { width: 3rem; height: 3rem; }
+.ink-countdown { position: absolute; place-self: center; font: 700 clamp(3.5rem, 12vw, 8rem)/1 var(--serif); text-shadow: 0 .12em .35em #2d1918; }
+.ink-shell [data-slot="native-select-wrapper"], .ink-shell [data-slot="input"] { width: 100%; }
+@media (min-width: 680px) {
+  .ink-hero { grid-template-columns: .95fr 1fr; }
+  .ink-design, .ink-review { grid-template-columns: 1fr 1fr; gap: clamp(2rem, 6vw, 4rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ink-shell button { transition: none; }
 }
