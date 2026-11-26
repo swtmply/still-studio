@@ -150,7 +150,7 @@ export function InkFrameAdmin() {
                 <Field>
                   <p className="m-0 text-sm font-medium">Layout</p>
                   {editing ? <p className="m-0 text-sm">{layout.label}</p> : <InkLayoutChoices layout={layout} onLayout={setLayout} disabled={busy} />}
-                  <FieldDescription>Each photo cell measures {POSTCARD.width / layout.columns} × {POSTCARD.height / layout.rows} px. Keep the photo windows transparent.</FieldDescription>
+                  <FieldDescription>Each photo cell measures {POSTCARD.width / layout.columns} × {POSTCARD.height / layout.rows} px. Keep photo windows transparent and put any header or footer artwork in the opaque areas.</FieldDescription>
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="frame-file">{editing ? 'Replace PNG (optional)' : 'Transparent PNG'}</FieldLabel>

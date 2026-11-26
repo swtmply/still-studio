@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 import { Camera } from 'lucide-react';
-import type { InkFrame, InkLayout } from '@/lib/ink-layouts';
-import { drawInkPreset } from '@/lib/ink-render';
+import { POSTCARD, type InkFrame, type InkLayout } from '@/lib/ink-layouts';
+import { drawInkPreset, inkPhotoRects } from '@/lib/ink-render';
 import { filters } from '@/lib/strip';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +14,7 @@ function PresetArt({ design, layout }: { design: string; layout: InkLayout }) {
   useEffect(() => {
     if (canvas.current) drawInkPreset(canvas.current, design, layout);
   }, [design, layout]);
-  return <canvas ref={canvas} width={222} height={342} className="absolute inset-0 size-full" />;
+  return <canvas ref={canvas} width={250} height={370} className="absolute inset-0 size-full" />;
 }
 
 export function PostcardGuide({ layout, frame, overlay, filter = 'color', sample = false, className }: {
@@ -26,12 +26,18 @@ export function PostcardGuide({ layout, frame, overlay, filter = 'color', sample
   className?: string;
 }) {
   const image = overlay || (frame?.kind === 'upload' ? frame.url : undefined);
-  return <div aria-hidden="true" className={cn('relative grid aspect-[25/37] w-full overflow-hidden bg-muted', className)}
-    style={{ gridTemplateColumns: `repeat(${layout.columns}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${layout.rows}, minmax(0, 1fr))` }}>
-    {Array.from({ length: layout.count }, (_, i) => sample ?
-      <img key={i} src={INK_SAMPLE_PHOTO} alt="" loading="lazy" className="ink-sample size-full object-cover" style={{ filter: filters[filter] }} /> :
-      <span key={i} className="grid place-items-center border border-background text-muted-foreground"><Camera className="opacity-60" /></span>
-    )}
+  const framed = !image && frame?.kind === 'preset';
+  return <div aria-hidden="true" className={cn('relative aspect-[25/37] w-full overflow-hidden bg-muted', className)}>
+    {inkPhotoRects(layout, framed).map((rect) => <span key={`${rect.x}-${rect.y}`} className="absolute grid place-items-center overflow-hidden"
+      style={{
+        left: `${100 * rect.x / POSTCARD.width}%`,
+        top: `${100 * rect.y / POSTCARD.height}%`,
+        width: `${100 * rect.width / POSTCARD.width}%`,
+        height: `${100 * rect.height / POSTCARD.height}%`,
+      }}>
+      {sample ? <img src={INK_SAMPLE_PHOTO} alt="" loading="lazy" className="ink-sample size-full object-cover" style={{ filter: filters[filter] }} /> :
+        <span className="grid size-full place-items-center border border-background text-muted-foreground"><Camera className="opacity-60" /></span>}
+    </span>)}
     {image ? <img src={image} alt="" loading="lazy" className="absolute inset-0 size-full" /> :
       frame?.kind === 'preset' && <PresetArt design={frame.design} layout={layout} />}
   </div>;
