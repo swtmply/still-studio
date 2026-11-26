@@ -387,6 +387,11 @@ a.outline-button, a.primary-button { text-decoration: none; }
 .ink-review .ink-postcard { max-width: 100%; }
 .ink-camera > svg { width: 3rem; height: 3rem; }
 .ink-countdown { position: absolute; place-self: center; font: 700 clamp(3.5rem, 12vw, 8rem)/1 var(--serif); text-shadow: 0 .12em .35em #2d1918; }
+.ink-shutter-flash { position: absolute; inset: 0; pointer-events: none; background: white; animation: ink-shutter 150ms ease-out both; }
+@keyframes ink-shutter {
+  from { opacity: .72; }
+  to { opacity: 0; }
+}
 .ink-shell [data-slot="native-select-wrapper"], .ink-shell [data-slot="input"] { width: 100%; }
 @media (min-width: 680px) {
   .ink-hero { grid-template-columns: .95fr 1fr; }
@@ -396,4 +401,5 @@ a.outline-button, a.primary-button { text-decoration: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ink-shell button { transition: none; }
+  .ink-shutter-flash { display: none; }
 }

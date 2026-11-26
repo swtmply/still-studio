@@ -66,7 +66,7 @@ function paintCell(context: CanvasRenderingContext2D, image: HTMLImageElement | 
 
 export async function renderInkPrint(shots: InkShot[], layout: InkLayout, filter: string, overlay?: InkFrame) {
   const [images, frame] = await Promise.all([Promise.all(shots.map(({ photo }) => loadImage(photo))), loadFrame(overlay, layout)]);
-  const { canvas, context } = canvasAt(POSTCARD.width, POSTCARD.height);
+  const { canvas, context } = canvasAt(POSTCARD.print.width, POSTCARD.print.height);
   context.filter = filters[filter] ?? 'none';
   images.forEach((image, i) => paintCell(context, image, i, layout));
   context.filter = 'none';
@@ -78,7 +78,7 @@ export async function renderInkGif(shots: InkShot[], layout: InkLayout, filter: 
   const { GIFEncoder, quantize, applyPalette } = await import('gifenc');
   const sample = shots[0].frames[0];
   const scratch = canvasAt(sample.width, sample.height);
-  for (const [width, height] of [[185, 285], [148, 228]]) {
+  for (const [width, height] of [[175, 259], [150, 222]]) {
     const { context } = canvasAt(width, height);
     const encoder = GIFEncoder();
     for (let i = 0; i < GIF_FRAMES; i++) {

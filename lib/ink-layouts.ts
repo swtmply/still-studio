@@ -1,4 +1,9 @@
-export const POSTCARD = { width: 1110, height: 1710, inches: { width: 3.7, height: 5.7 } };
+export const POSTCARD = {
+  width: 1110,
+  height: 1710,
+  print: { width: 1200, height: 1776 },
+  millimeters: { width: 100, height: 148 },
+};
 export const FRAME_MAX_BYTES = 2_000_000;
 export const GIF_MAX_BYTES = 450_000;
 export const SHARE_TTL_MS = 6 * 60 * 60 * 1000;

@@ -1,10 +1,10 @@
 # Moments in Ink
 
-The online booth at `/` prints borderless 3.7 × 5.7 in portrait postcards. Choose a 2 × 3, 2 × 2, or single-photo layout, then take eight photos with ten seconds between shots. Confirm the preview to create an online GIF share. **Finish and return to welcome** clears the booth after guests have had time to scan or print.
+The online booth at `/` prints borderless 100 × 148 mm Japanese Postcards. Choose a 2 × 3, 2 × 2, or single-photo layout, then take eight shots seven seconds apart. Booth screens advance after at most 60 seconds. Camera setup starts shooting when the timer ends if the guest has enabled the camera. Otherwise it returns to welcome. Photo selection fills any open slots in capture order, and the preview automatically confirms when time runs out. The share screen returns to welcome on its own or when the guest selects **Finish and return to welcome**.
 
 - **Frames:** `/admin/frames` shows a preview of each preset and uploaded frame. Use it to rename or remove presets, or to rename, replace, and delete uploaded frames. PNG overlays must be exactly 1110 × 1710 px, have transparent photo windows, and be up to 2 MB. The page shows the cell dimensions for each layout. Changes require a randomly generated server-side `INK_ADMIN_TOKEN` of at least 32 characters.
 - **Shares:** One private GIF per postcard, capped at 450 KB. Both the viewer and media URL stop serving it after six hours. Vercel Workflow schedules deletion at that time. Blob’s one-day native TTL provides a fallback. The production app needs a private Vercel Blob connection and Vercel Workflows. Local workflow execution is intended for development and requires the local worker to be running.
-- **Printing:** The print document contains only the postcard at zero CSS margins, without any printed branding, timestamp, or URL in the image. In the print dialog, use matching paper, 100% scale, and the printer’s borderless preset. Turn off the browser’s **Headers and footers** setting if it adds them.
+- **Printing:** The 1200 × 1776 px postcard fills a 100 × 148 mm print page with zero CSS margins. Existing 1110 × 1710 px overlays fit the new print canvas. Select **Japanese Postcard**, 100% scale, no margins, and the printer’s **Borderless** setting. Turn off browser headers and footers if they appear.
 
 ## Original offline booth
 

@@ -77,7 +77,7 @@ export function InkDesign({ layout, onLayout, frame, frames, onFrame, filter, on
       <PostcardGuide layout={layout} frame={frame} filter={filter} sample className="shadow-md" />
       <figcaption className="mt-3 text-sm text-muted-foreground">
         <span className="capitalize">{layout.label} · {frame?.name ?? 'Full bleed'} · {finish?.name}</span>
-        <span className="mt-1 block">3.7 × 5.7 in · Sample preview</span>
+        <span className="mt-1 block">100 × 148 mm · Sample preview</span>
       </figcaption>
     </figure>
   </div>;

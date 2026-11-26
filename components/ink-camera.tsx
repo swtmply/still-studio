@@ -2,22 +2,33 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Camera } from 'lucide-react';
+import { InkScreenTimer } from '@/components/ink-screen-timer';
 import { Button } from '@/components/ui/button';
 import { captureInkShot, SHOT_INTERVAL, type InkShot } from '@/lib/ink-capture';
 
-export function InkCamera({ onBack, onFinish }: { onBack: () => void; onFinish: (shots: InkShot[]) => void }) {
+export function InkCamera({ onBack, onFinish, onTimeout, minimumPhotos }: {
+  onBack: () => void;
+  onFinish: (shots: InkShot[]) => void;
+  onTimeout: () => void;
+  minimumPhotos: number;
+}) {
   const video = useRef<HTMLVideoElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
   const stream = useRef<MediaStream | null>(null);
   const capture = useRef<AbortController | null>(null);
+  const completed = useRef<InkShot[]>([]);
   const [mode, setMode] = useState<'off' | 'opening' | 'ready' | 'shooting'>('off');
   const [count, setCount] = useState(0);
-  const [seconds, setSeconds] = useState(10);
+  const [seconds, setSeconds] = useState(SHOT_INTERVAL / 1000);
   const [error, setError] = useState('');
 
   useEffect(() => () => {
     capture.current?.abort();
     stream.current?.getTracks().forEach((track) => track.stop());
   }, []);
+
+  const shooting = mode === 'shooting';
+  useEffect(() => { heading.current?.focus(); }, [shooting]);
 
   async function openCamera() {
     setMode('opening');
@@ -50,22 +61,29 @@ export function InkCamera({ onBack, onFinish }: { onBack: () => void; onFinish: 
     setError('');
     setMode('shooting');
     setCount(0);
+    const shots: InkShot[] = [];
+    completed.current = shots;
     const pause = () => { if (document.hidden) controller.abort(); };
     document.addEventListener('visibilitychange', pause);
     let shotAt = performance.now() + SHOT_INTERVAL;
-    const update = () => setSeconds(Math.max(0, Math.ceil((shotAt - performance.now()) / 1000)));
+    let showZeroUntil = 0;
+    const update = () => {
+      const now = performance.now();
+      setSeconds(now < showZeroUntil ? 0 : Math.max(0, Math.ceil((shotAt - now) / 1000)));
+    };
     update();
     const clock = setInterval(update, 100);
     try {
-      const shots: InkShot[] = [];
       for (let i = 0; i < 8; i++) {
         const deadline = shotAt;
         shots.push(await captureInkShot(element, deadline, controller.signal, () => {
           setCount(i + 1);
-          if (i < 7) shotAt = deadline + SHOT_INTERVAL;
+          showZeroUntil = performance.now() + 180;
+          shotAt = deadline + SHOT_INTERVAL;
           update();
         }));
       }
+      controller.signal.throwIfAborted();
       onFinish(shots);
     } catch (error) {
       if (video.current) {
@@ -86,11 +104,27 @@ export function InkCamera({ onBack, onFinish }: { onBack: () => void; onFinish: 
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 ref={heading} tabIndex={-1} className="ink-title">{shooting ? 'Pose for the camera' : 'Get the camera ready'}</h1>
+        <InkScreenTimer key={shooting ? 'capture' : 'camera-setup'} onExpire={() => {
+          if (mode === 'ready') {
+            void shoot();
+            return;
+          }
+          capture.current?.abort();
+          if (shooting && completed.current.length >= minimumPhotos) onFinish(completed.current);
+          else onTimeout();
+        }} />
+      </div>
       <div className="ink-camera relative grid aspect-video overflow-hidden rounded-xl bg-foreground text-primary-foreground">
         <video ref={video} autoPlay muted playsInline className="size-full -scale-x-100 object-contain" />
         {(mode === 'off' || mode === 'opening') && <Camera aria-hidden="true" className="absolute place-self-center opacity-60" />}
-        {mode === 'shooting' && <span aria-hidden="true" className="ink-countdown">{count === 8 ? '✓' : seconds}</span>}
+        {mode === 'shooting' && <>
+          {count > 0 && <span key={count} aria-hidden="true" className="ink-shutter-flash" />}
+          <span aria-hidden="true" className="ink-countdown">{count === 8 && seconds !== 0 ? '✓' : seconds}</span>
+        </>}
       </div>
+      {!shooting && <p className="m-0 text-sm text-muted-foreground">Eight shots, seven seconds apart. Once the camera is enabled, shooting starts when you press Start or when the timer ends.</p>}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button type="button" variant="outline" onClick={onBack}>Back</Button>
         {mode === 'shooting' ? <p role="status" className="m-0">Shot {count} of 8</p> :

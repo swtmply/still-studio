@@ -2,7 +2,7 @@ import { delay } from './media';
 
 export const GIF_FRAMES = 12;
 export const GIF_FRAME_MS = 250;
-export const SHOT_INTERVAL = 10_000;
+export const SHOT_INTERVAL = 7_000;
 
 export type InkShot = { photo: string; frames: ImageData[] };
 

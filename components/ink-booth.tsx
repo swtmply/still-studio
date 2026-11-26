@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Camera, Check, Printer } from 'lucide-react';
 import { InkCamera } from '@/components/ink-camera';
 import { InkDesign } from '@/components/ink-design';
+import { InkScreenTimer } from '@/components/ink-screen-timer';
 import { Button } from '@/components/ui/button';
 import { inkLayouts, POSTCARD, type InkFrame, type InkLayout } from '@/lib/ink-layouts';
 import type { InkShot } from '@/lib/ink-capture';
@@ -16,7 +17,6 @@ type Share = { url: string; qr: string; expiresAt: number };
 
 const stepTitles = {
   design: 'Set the look',
-  camera: 'Pose for the camera',
   select: 'Pick your photos',
   preview: 'Preview your postcard',
   share: 'Keep the moment',
@@ -39,6 +39,8 @@ export function InkBooth() {
   const heading = useRef<HTMLHeadingElement>(null);
   const printFrame = useRef<HTMLIFrameElement | null>(null);
   const printOverlay = useRef<InkOverlay>(null);
+  const screenVersion = useRef(0);
+  const shareRequest = useRef<AbortController | null>(null);
   const frame = frames.find((item) => item.id === frameId && (item.kind === 'preset' || item.layout === layout.id));
 
   useEffect(() => {
@@ -46,11 +48,17 @@ export function InkBooth() {
     window.scrollTo(0, 0);
   }, [step]);
 
-  useEffect(() => () => printFrame.current?.remove(), []);
+  useEffect(() => () => {
+    printFrame.current?.remove();
+    shareRequest.current?.abort();
+  }, []);
 
   function go(next: Step) {
+    shareRequest.current?.abort();
+    screenVersion.current += 1;
     setError('');
     setStep(next);
+    return screenVersion.current;
   }
 
   async function loadFrames() {
@@ -64,8 +72,12 @@ export function InkBooth() {
     }
   }
 
+  function start() {
+    go('design');
+    void loadFrames();
+  }
+
   function reset() {
-    printFrame.current?.remove();
     printOverlay.current = null;
     setLayout(inkLayouts[0]);
     setFrameId('');
@@ -74,6 +86,8 @@ export function InkBooth() {
     setSelected([]);
     setPrint('');
     setShare(null);
+    setBusy(false);
+    setPrinting(false);
     go('welcome');
   }
 
@@ -84,37 +98,70 @@ export function InkBooth() {
     });
   }
 
-  async function preview() {
-    setBusy(true);
-    setError('');
+  async function preview(selection = selected) {
+    setSelected(selection);
+    setPrint('');
+    printOverlay.current = null;
+    const version = go('preview');
     try {
-      const { image, overlay } = await renderInkPrint(selected.map((index) => shots[index]), layout, filter, frame);
+      const { image, overlay } = await renderInkPrint(selection.map((index) => shots[index]), layout, filter, frame);
+      if (screenVersion.current !== version) return;
       printOverlay.current = overlay;
       setPrint(image);
-      go('preview');
     } catch {
-      setError('Could not build the preview. Make sure your frame is available and try again.');
-    } finally { setBusy(false); }
+      if (screenVersion.current === version) setError('Could not build the preview. Go back and try again.');
+    }
+  }
+
+  function confirm() {
+    go('share');
+    void publish();
+  }
+
+  function advance() {
+    switch (step) {
+      case 'welcome': start(); break;
+      case 'design': go('camera'); break;
+      case 'select': {
+        const remaining = shots.map((_, index) => index).filter((index) => !selected.includes(index));
+        void preview([...selected, ...remaining].slice(0, layout.count));
+        break;
+      }
+      case 'preview':
+        if (print) confirm();
+        else reset();
+        break;
+      case 'share': reset(); break;
+    }
   }
 
   async function publish() {
+    const version = screenVersion.current;
+    const controller = new AbortController();
+    shareRequest.current = controller;
     setBusy(true);
     setError('');
     try {
       const gif = await renderInkGif(selected.map((index) => shots[index]), layout, filter, printOverlay.current);
+      controller.signal.throwIfAborted();
       const form = new FormData();
       form.append('gif', gif, 'postcard.gif');
-      const response = await fetch('/api/ink/share', { method: 'POST', body: form, signal: AbortSignal.timeout(60_000) });
+      const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(60_000)]);
+      const response = await fetch('/api/ink/share', { method: 'POST', body: form, signal });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Could not create the share link.');
+      if (screenVersion.current !== version) return;
       setShare(result);
       setShots([]);
     } catch (error) {
-      setError(error instanceof Error && error.name !== 'TypeError' ? error.message : 'Could not create the QR link. Check your internet connection and retry.');
-    } finally { setBusy(false); }
+      if (screenVersion.current === version) setError(error instanceof Error && error.name !== 'TypeError' ? error.message : 'Could not create the QR link. Check your internet connection and retry.');
+    } finally {
+      if (screenVersion.current === version) setBusy(false);
+    }
   }
 
   async function openPrint() {
+    const version = screenVersion.current;
     printFrame.current?.remove();
     const output = document.createElement('iframe');
     output.className = 'photo-print-frame';
@@ -128,26 +175,29 @@ export function InkBooth() {
     try { await printMoment(output, print, { ...POSTCARD, name: 'Postcard' }); }
     catch {
       output.remove();
-      setError('Could not open the print dialog. Save the postcard and print it from your device.');
-    } finally { setPrinting(false); }
+      if (screenVersion.current === version) setError('Could not open the print dialog. Save the postcard and print it from your device.');
+    } finally {
+      if (screenVersion.current === version) setPrinting(false);
+    }
   }
 
   return (
     <div className="ink-shell min-h-dvh bg-background text-foreground">
-      <header className="ink-nav">
+      <header className="ink-nav flex-wrap">
         {step === 'welcome' && <a className="ink-wordmark" href="/">Moments <em>in Ink</em></a>}
         {step !== 'welcome' && <span className="ink-wordmark">Moments <em>in Ink</em></span>}
+        {step !== 'camera' && <InkScreenTimer key={step} onExpire={advance} />}
         {step === 'welcome' && <Button asChild variant="ghost"><a href="/admin/frames">Frame admin</a></Button>}
       </header>
       <main className="ink-main">
         {step === 'welcome' ? <section className="ink-hero">
           <div className="ink-hero-copy">
             <h1 ref={heading} tabIndex={-1}>Moments<br /><em>in Ink.</em></h1>
-            <Button size="lg" className="min-h-12 w-fit" onClick={() => { go('design'); void loadFrames(); }}><Camera data-icon="inline-start" />Capture the Moment<ArrowRight data-icon="inline-end" /></Button>
+            <Button size="lg" className="min-h-12 w-fit" onClick={start}><Camera data-icon="inline-start" />Capture the Moment<ArrowRight data-icon="inline-end" /></Button>
           </div>
           <img className="ink-hero-art" src="/ink-booth.webp" alt="Photobooth prints scattered on crimson fabric beside a vintage flash" />
         </section> : <section className="mx-auto flex w-full max-w-3xl flex-col gap-7">
-          <h1 ref={heading} tabIndex={-1} className="ink-title">{stepTitles[step]}</h1>
+          {step !== 'camera' && <h1 ref={heading} tabIndex={-1} className="ink-title">{stepTitles[step]}</h1>}
           {step === 'design' && <>
             <InkDesign layout={layout} frame={frame} frames={frames} filter={filter} frameError={frameError} retryFrames={loadFrames}
               onLayout={(next) => {
@@ -160,9 +210,9 @@ export function InkBooth() {
               <Button size="lg" onClick={() => go('camera')}>Continue to camera <ArrowRight data-icon="inline-end" /></Button>
             </div>
           </>}
-          {step === 'camera' && <InkCamera onBack={() => go('design')} onFinish={(result) => { setShots(result); setSelected([]); go('select'); }} />}
+          {step === 'camera' && <InkCamera minimumPhotos={layout.count} onTimeout={reset} onBack={() => go('design')} onFinish={(result) => { setShots(result); setSelected([]); go('select'); }} />}
           {step === 'select' && <>
-            <p className="m-0 text-muted-foreground" role="status">{selected.length} of {layout.count} selected. Tap in the order you want them printed.</p>
+            <p className="m-0 text-muted-foreground" role="status">{selected.length} of {layout.count} selected. Tap in print order. The timer fills any open spots in capture order.</p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {shots.map(({ photo }, index) => {
                 const order = selected.indexOf(index) + 1;
@@ -174,18 +224,20 @@ export function InkBooth() {
             </div>
             <div className="flex flex-wrap justify-between gap-3">
               <Button variant="outline" disabled={busy} onClick={() => go('camera')}>Retake photos</Button>
-              <Button size="lg" disabled={busy || selected.length !== layout.count} onClick={preview}>{busy ? 'Building preview…' : 'Preview postcard'} <ArrowRight data-icon="inline-end" /></Button>
+              <Button size="lg" disabled={selected.length !== layout.count} onClick={() => preview()}>Preview postcard <ArrowRight data-icon="inline-end" /></Button>
             </div>
           </>}
           {(step === 'preview' || step === 'share') && <div className="ink-review">
-            <img className="ink-postcard" src={print} alt="Your finished 3.7 by 5.7 inch portrait postcard" />
+            {print ? <img className="ink-postcard" src={print} alt="Your finished Japanese Postcard" /> :
+              <p className="m-0 text-muted-foreground" role="status">{error ? 'Preview unavailable.' : 'Preparing your postcard…'}</p>}
             {step === 'preview' ? <div className="flex flex-col gap-4">
-              <p className="m-0 text-muted-foreground">3.7 × 5.7 in · Portrait · {layout.label}</p>
-              <Button size="lg" onClick={() => { go('share'); void publish(); }}><Check data-icon="inline-start" />Confirm postcard</Button>
+              <p className="m-0 text-muted-foreground">100 × 148 mm · Portrait · {layout.label}</p>
+              <p className="m-0 text-sm text-muted-foreground">The booth creates your six-hour GIF link when you confirm or the timer ends.</p>
+              <Button size="lg" disabled={!print} onClick={confirm}><Check data-icon="inline-start" />Confirm postcard</Button>
               <Button variant="outline" onClick={() => go('select')}>Change photos</Button>
             </div> : <div className="flex flex-col gap-4">
               <Button size="lg" className="min-h-14 w-full" disabled={printing} onClick={openPrint}><Printer data-icon="inline-start" />{printing ? 'Opening print…' : 'Print this moment'}</Button>
-              <p className="m-0 text-sm text-muted-foreground">Choose 3.7 × 5.7 in paper, borderless mode and 100% scale. Turn off browser headers and footers if they appear.</p>
+              <p className="m-0 text-sm text-muted-foreground">Select Japanese Postcard, 100% scale and no margins. Enable Borderless in the printer preferences.</p>
               <Button asChild variant="outline"><a href={print} download="moments-in-ink.png">Save postcard</a></Button>
               {share ? <div className="grid justify-items-center gap-2 rounded-lg border border-border bg-white p-4 text-center">
                 <img className="size-36" src={share.qr} alt="Scan to open the postcard GIF" />

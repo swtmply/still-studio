@@ -167,7 +167,7 @@ export function InkFrameAdmin() {
           </form>
           <figure className="m-0 mx-auto w-full max-w-48 text-center">
             <PostcardGuide layout={layout} frame={editing ?? undefined} overlay={previewUrl || undefined} sample={Boolean(editing || previewUrl)} className="rounded-sm" />
-            <figcaption className="mt-2 text-sm text-muted-foreground">3.7 × 5.7 in · Portrait</figcaption>
+            <figcaption className="mt-2 text-sm text-muted-foreground">Japanese Postcard · 100 × 148 mm</figcaption>
           </figure>
         </section>
         <section aria-labelledby="saved-frames" className="flex flex-col gap-4">

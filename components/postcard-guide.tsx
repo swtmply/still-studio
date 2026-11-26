@@ -26,7 +26,7 @@ export function PostcardGuide({ layout, frame, overlay, filter = 'color', sample
   className?: string;
 }) {
   const image = overlay || (frame?.kind === 'upload' ? frame.url : undefined);
-  return <div aria-hidden="true" className={cn('relative grid aspect-[37/57] w-full overflow-hidden bg-muted', className)}
+  return <div aria-hidden="true" className={cn('relative grid aspect-[25/37] w-full overflow-hidden bg-muted', className)}
     style={{ gridTemplateColumns: `repeat(${layout.columns}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${layout.rows}, minmax(0, 1fr))` }}>
     {Array.from({ length: layout.count }, (_, i) => sample ?
       <img key={i} src={INK_SAMPLE_PHOTO} alt="" loading="lazy" className="ink-sample size-full object-cover" style={{ filter: filters[filter] }} /> :
