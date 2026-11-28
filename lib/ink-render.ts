@@ -53,21 +53,23 @@ export function drawInkPreset(canvas: HTMLCanvasElement, design: string, layout:
   context.beginPath();
   context.rect(textInsetX, textInsetY, width - 2 * textInsetX, height - 2 * textInsetY);
   context.clip();
-  const footerTop = height - presetSpacing.bottom;
+  const textShiftX = 2 * width / POSTCARD.millimeters.width;
+  const textShiftY = 2 * height / POSTCARD.millimeters.height;
+  const footerTextY = height - presetSpacing.bottom - textShiftY;
   context.fillStyle = frame.ink;
   context.font = 'bold 24px Arial';
   context.textAlign = 'left';
-  const headerBaseline = presetSpacing.top * 0.64;
-  context.fillText('MOMENTS IN INK', presetSpacing.margin, headerBaseline);
+  const headerBaseline = presetSpacing.top * 0.64 + textShiftY;
+  context.fillText('MOMENTS IN INK', presetSpacing.margin + textShiftX, headerBaseline);
   context.textAlign = 'right';
-  context.fillText(`${layout.count} LITTLE MOMENT${layout.count === 1 ? '' : 'S'}`, width - presetSpacing.margin, headerBaseline);
+  context.fillText(`${layout.count} LITTLE MOMENT${layout.count === 1 ? '' : 'S'}`, width - presetSpacing.margin - textShiftX, headerBaseline);
   context.textAlign = 'center';
   context.font = 'bold 76px Georgia';
-  context.fillText(`Moments in Ink${frame.motif ? ' ' + frame.motif : ''}`, width / 2, footerTop + 88);
+  context.fillText(`Moments in Ink${frame.motif ? ' ' + frame.motif : ''}`, width / 2, footerTextY + 88);
   context.font = '24px Arial';
-  context.fillText('A MOMENT TO KEEP', width / 2, footerTop + 133);
+  context.fillText('A MOMENT TO KEEP', width / 2, footerTextY + 133);
   context.font = '20px Arial';
-  context.fillText(dateLabel(new Date()), width / 2, footerTop + 178);
+  context.fillText(dateLabel(new Date()), width / 2, footerTextY + 178);
   context.restore();
 }
 

@@ -120,7 +120,6 @@ export function InkBooth() {
 
   function advance() {
     switch (step) {
-      case 'welcome': start(); break;
       case 'design': go('camera'); break;
       case 'select': {
         const remaining = shots.map((_, index) => index).filter((index) => !selected.includes(index));
@@ -186,7 +185,7 @@ export function InkBooth() {
       <header className="ink-nav flex-wrap">
         {step === 'welcome' && <a className="ink-wordmark" href="/">Moments <em>in Ink</em></a>}
         {step !== 'welcome' && <span className="ink-wordmark">Moments <em>in Ink</em></span>}
-        {step !== 'camera' && <InkScreenTimer key={step} onExpire={advance} />}
+        {step !== 'welcome' && step !== 'camera' && <InkScreenTimer key={step} onExpire={advance} />}
         {step === 'welcome' && <Button asChild variant="outline"><a href="/dashboard">Dashboard</a></Button>}
       </header>
       <main className="ink-main">
