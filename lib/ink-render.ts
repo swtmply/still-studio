@@ -62,9 +62,9 @@ export function drawInkPreset(canvas: HTMLCanvasElement, design: string, layout:
   context.font = 'bold 24px Arial';
   context.textAlign = 'left';
   const headerBaseline = presetSpacing.top * 0.64 + textShiftY;
-  context.fillText('MOMENTS IN INK', leftTextX, headerBaseline);
+  context.fillText(`${layout.count} LITTLE MOMENT${layout.count === 1 ? '' : 'S'}`, leftTextX, headerBaseline);
   context.textAlign = 'right';
-  context.fillText(`${layout.count} LITTLE MOMENT${layout.count === 1 ? '' : 'S'}`, rightTextX, headerBaseline);
+  context.fillText('MOMENTS IN INK', rightTextX, headerBaseline);
   context.textAlign = 'left';
   context.font = 'bold 76px Georgia';
   context.fillText(`Moments in Ink${frame.motif ? ' ' + frame.motif : ''}`, leftTextX, footerTextY + 88, width / 2 - leftTextX);
