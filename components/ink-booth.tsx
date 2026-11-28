@@ -194,7 +194,7 @@ export function InkBooth() {
             <h1 ref={heading} tabIndex={-1}>Moments<br /><em>in Ink.</em></h1>
             <Button size="lg" className="min-h-12 w-fit" onClick={start}><Camera data-icon="inline-start" />Capture the Moment<ArrowRight data-icon="inline-end" /></Button>
           </div>
-          <img className="ink-hero-art" src="/ink-booth.webp" alt="Photobooth prints scattered on crimson fabric beside a vintage flash" />
+          <img className="ink-hero-art" src="/ink-welcome.jpg" alt="Black photo booth with a winking face against a wooden backdrop" />
         </section> : <section className="mx-auto flex w-full max-w-3xl flex-col gap-7">
           {step !== 'camera' && <h1 ref={heading} tabIndex={-1} className="ink-title">{stepTitles[step]}</h1>}
           {step === 'design' && <>
