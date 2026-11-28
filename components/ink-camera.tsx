@@ -143,7 +143,7 @@ export function InkCamera({ onBack, onFinish, onTimeout, layout, framed }: {
           </div>
         </figure>
       </div>
-      {!shooting && <p className="m-0 text-sm text-muted-foreground">Eight shots, seven seconds apart. Once the camera is enabled, shooting starts when you press Start or when the timer ends.</p>}
+      {!shooting && <p className="m-0 text-sm text-muted-foreground">Eight shots, {SHOT_INTERVAL / 1000} seconds apart. Once the camera is enabled, shooting starts when you press Start or when the timer ends.</p>}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button type="button" variant="outline" onClick={onBack}>Back</Button>
         {mode === 'shooting' ? <p role="status" className="m-0">Shot {count} of 8</p> :

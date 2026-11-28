@@ -46,6 +46,13 @@ export function drawInkPreset(canvas: HTMLCanvasElement, design: string, layout:
     context.clearRect(rect.x, rect.y, rect.width, rect.height);
   }
 
+  // Keep text inside the trim area while the frame artwork extends to the paper edges.
+  const textInsetY = height * (POSTCARD.millimeters.height - 146) / (2 * POSTCARD.millimeters.height);
+  const textInsetX = presetSpacing.margin / 2;
+  context.save();
+  context.beginPath();
+  context.rect(textInsetX, textInsetY, width - 2 * textInsetX, height - 2 * textInsetY);
+  context.clip();
   const footerTop = height - presetSpacing.bottom;
   context.fillStyle = frame.ink;
   context.font = 'bold 24px Arial';
@@ -61,6 +68,7 @@ export function drawInkPreset(canvas: HTMLCanvasElement, design: string, layout:
   context.fillText('A MOMENT TO KEEP', width / 2, footerTop + 133);
   context.font = '20px Arial';
   context.fillText(dateLabel(new Date()), width / 2, footerTop + 178);
+  context.restore();
 }
 
 async function loadFrame(frame: InkFrame | undefined, layout: InkLayout): Promise<InkOverlay> {
