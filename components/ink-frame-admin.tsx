@@ -18,7 +18,6 @@ export function InkFrameAdmin() {
   const [editing, setEditing] = useState<InkFrame | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
-  const [key, setKey] = useState('');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [formError, setFormError] = useState('');
@@ -74,16 +73,11 @@ export function InkFrameAdmin() {
     data.set('layout', layout.id);
     setStatus('');
     setFormError('');
-    if (!key.trim()) {
-      setFormError('Enter the admin key to save changes.');
-      return;
-    }
     setBusy(true);
     try {
       const url = editing ? framesEndpoint + '?id=' + encodeURIComponent(editing.id) : framesEndpoint;
       const response = await fetch(url, {
         method: editing ? 'PATCH' : 'POST',
-        headers: { Authorization: 'Bearer ' + key.trim() },
         body: data,
         signal: AbortSignal.timeout(30_000),
       });
@@ -102,16 +96,10 @@ export function InkFrameAdmin() {
   async function remove(frame: InkFrame) {
     setLibraryError('');
     setStatus('');
-    if (!key.trim()) {
-      setLibraryError('Enter the admin key to delete a frame.');
-      document.getElementById('frame-key')?.focus();
-      return;
-    }
     setBusy(true);
     try {
       const response = await fetch(framesEndpoint + '?id=' + encodeURIComponent(frame.id), {
         method: 'DELETE',
-        headers: { Authorization: 'Bearer ' + key.trim() },
         signal: AbortSignal.timeout(30_000),
       });
       if (!response.ok) throw new Error((await response.json()).error || 'Could not delete the frame.');
@@ -126,18 +114,8 @@ export function InkFrameAdmin() {
     } finally { setBusy(false); }
   }
 
-  return <div className="ink-shell min-h-dvh bg-background text-foreground">
-    <header className="ink-nav">
-      <a className="ink-wordmark" href="/">Moments <em>in Ink</em></a>
-      <Button variant="ghost" asChild><a href="/">Back to booth</a></Button>
-    </header>
-    <main className="ink-main">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-9">
+  return <div className="mx-auto flex w-full max-w-5xl flex-col gap-9">
         <h1 className="ink-title">Frame library</h1>
-        <Field className="w-full max-w-sm">
-          <FieldLabel htmlFor="frame-key">Admin key</FieldLabel>
-          <Input id="frame-key" type="password" value={key} onChange={(event) => setKey(event.target.value)} autoComplete="current-password" />
-        </Field>
         <section className="ink-design rounded-xl border border-border p-5 sm:p-7" aria-labelledby="frame-form-title">
           <form key={editing?.id ?? 'upload'} className="flex min-w-0 flex-col gap-5" onSubmit={save}>
             <h2 id="frame-form-title" tabIndex={-1} ref={formTitle} className="m-0 font-serif text-2xl">{editing ? 'Edit frame' : 'Upload a frame'}</h2>
@@ -208,7 +186,5 @@ export function InkFrameAdmin() {
             })}
           </ul>
         </section>
-      </div>
-    </main>
   </div>;
 }

@@ -5,12 +5,15 @@ import { Camera } from 'lucide-react';
 import { InkScreenTimer } from '@/components/ink-screen-timer';
 import { Button } from '@/components/ui/button';
 import { captureInkShot, SHOT_INTERVAL, type InkShot } from '@/lib/ink-capture';
+import { POSTCARD, type InkLayout } from '@/lib/ink-layouts';
+import { inkPhotoRects } from '@/lib/ink-render';
 
-export function InkCamera({ onBack, onFinish, onTimeout, minimumPhotos }: {
+export function InkCamera({ onBack, onFinish, onTimeout, layout, framed }: {
   onBack: () => void;
   onFinish: (shots: InkShot[]) => void;
   onTimeout: () => void;
-  minimumPhotos: number;
+  layout: InkLayout;
+  framed: boolean;
 }) {
   const video = useRef<HTMLVideoElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -19,6 +22,7 @@ export function InkCamera({ onBack, onFinish, onTimeout, minimumPhotos }: {
   const completed = useRef<InkShot[]>([]);
   const [mode, setMode] = useState<'off' | 'opening' | 'ready' | 'shooting'>('off');
   const [count, setCount] = useState(0);
+  const [latestPhoto, setLatestPhoto] = useState('');
   const [seconds, setSeconds] = useState(SHOT_INTERVAL / 1000);
   const [error, setError] = useState('');
 
@@ -28,6 +32,9 @@ export function InkCamera({ onBack, onFinish, onTimeout, minimumPhotos }: {
   }, []);
 
   const shooting = mode === 'shooting';
+  const cell = inkPhotoRects(layout, framed)[0];
+  const aspectRatio = (cell.width / POSTCARD.width * POSTCARD.print.width)
+    / (cell.height / POSTCARD.height * POSTCARD.print.height);
   useEffect(() => { heading.current?.focus(); }, [shooting]);
 
   async function openCamera() {
@@ -61,6 +68,7 @@ export function InkCamera({ onBack, onFinish, onTimeout, minimumPhotos }: {
     setError('');
     setMode('shooting');
     setCount(0);
+    setLatestPhoto('');
     const shots: InkShot[] = [];
     completed.current = shots;
     const pause = () => { if (document.hidden) controller.abort(); };
@@ -76,7 +84,8 @@ export function InkCamera({ onBack, onFinish, onTimeout, minimumPhotos }: {
     try {
       for (let i = 0; i < 8; i++) {
         const deadline = shotAt;
-        shots.push(await captureInkShot(element, deadline, controller.signal, () => {
+        shots.push(await captureInkShot(element, deadline, controller.signal, (photo) => {
+          setLatestPhoto(photo);
           setCount(i + 1);
           showZeroUntil = performance.now() + 180;
           shotAt = deadline + SHOT_INTERVAL;
@@ -112,17 +121,27 @@ export function InkCamera({ onBack, onFinish, onTimeout, minimumPhotos }: {
             return;
           }
           capture.current?.abort();
-          if (shooting && completed.current.length >= minimumPhotos) onFinish(completed.current);
+          if (shooting && completed.current.length >= layout.count) onFinish(completed.current);
           else onTimeout();
         }} />
       </div>
-      <div className="ink-camera relative grid aspect-video overflow-hidden rounded-xl bg-foreground text-primary-foreground">
-        <video ref={video} autoPlay muted playsInline className="size-full -scale-x-100 object-contain" />
-        {(mode === 'off' || mode === 'opening') && <Camera aria-hidden="true" className="absolute place-self-center opacity-60" />}
-        {mode === 'shooting' && <>
-          {count > 0 && <span key={count} aria-hidden="true" className="ink-shutter-flash" />}
-          <span aria-hidden="true" className="ink-countdown">{count === 8 && seconds !== 0 ? '✓' : seconds}</span>
-        </>}
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(5rem,25%)] items-end justify-items-center gap-3 sm:gap-5">
+        <div className="ink-camera relative grid overflow-hidden rounded-xl bg-foreground text-primary-foreground"
+          style={{ aspectRatio, width: `min(100%, ${aspectRatio * 57}svh)` }}>
+          <video ref={video} autoPlay muted playsInline className="absolute inset-0 size-full -scale-x-100 object-cover" />
+          {(mode === 'off' || mode === 'opening') && <Camera aria-hidden="true" className="absolute place-self-center opacity-60" />}
+          {shooting && <>
+            {count > 0 && <span key={count} aria-hidden="true" className="ink-shutter-flash" />}
+            <span aria-hidden="true" className="ink-countdown">{count === 8 && seconds !== 0 ? '✓' : seconds}</span>
+          </>}
+        </div>
+        <figure className="m-0 w-full max-w-40">
+          <figcaption className="mb-2 text-sm text-muted-foreground">Latest photo</figcaption>
+          <div className="relative grid w-full place-items-center overflow-hidden rounded-lg border border-border bg-muted" style={{ aspectRatio }}>
+            {latestPhoto ? <img className="absolute inset-0 size-full object-cover" src={latestPhoto} alt={`Photo ${count}`} />
+              : <Camera aria-hidden="true" className="text-muted-foreground" />}
+          </div>
+        </figure>
       </div>
       {!shooting && <p className="m-0 text-sm text-muted-foreground">Eight shots, seven seconds apart. Once the camera is enabled, shooting starts when you press Start or when the timer ends.</p>}
       <div className="flex flex-wrap items-center justify-between gap-3">

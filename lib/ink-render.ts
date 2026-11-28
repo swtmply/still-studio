@@ -7,7 +7,7 @@ export type InkOverlay =
   | { kind: 'upload'; image: HTMLImageElement }
   | null;
 
-const presetSpacing = { margin: 50, gap: 22, top: 110, bottom: 224 };
+const presetSpacing = { margin: 50, gap: 22, top: 96, bottom: 224 };
 
 export function inkPhotoRects(layout: InkLayout, framed: boolean) {
   return photoRects({
@@ -50,9 +50,10 @@ export function drawInkPreset(canvas: HTMLCanvasElement, design: string, layout:
   context.fillStyle = frame.ink;
   context.font = 'bold 24px Arial';
   context.textAlign = 'left';
-  context.fillText('MOMENTS IN INK', presetSpacing.margin, 68);
+  const headerBaseline = presetSpacing.top * 0.64;
+  context.fillText('MOMENTS IN INK', presetSpacing.margin, headerBaseline);
   context.textAlign = 'right';
-  context.fillText(`${layout.count} LITTLE MOMENT${layout.count === 1 ? '' : 'S'}`, width - presetSpacing.margin, 68);
+  context.fillText(`${layout.count} LITTLE MOMENT${layout.count === 1 ? '' : 'S'}`, width - presetSpacing.margin, headerBaseline);
   context.textAlign = 'center';
   context.font = 'bold 76px Georgia';
   context.fillText(`Moments in Ink${frame.motif ? ' ' + frame.motif : ''}`, width / 2, footerTop + 88);

@@ -187,7 +187,6 @@ export function InkBooth() {
         {step === 'welcome' && <a className="ink-wordmark" href="/">Moments <em>in Ink</em></a>}
         {step !== 'welcome' && <span className="ink-wordmark">Moments <em>in Ink</em></span>}
         {step !== 'camera' && <InkScreenTimer key={step} onExpire={advance} />}
-        {step === 'welcome' && <Button asChild variant="ghost"><a href="/admin/frames">Frame admin</a></Button>}
       </header>
       <main className="ink-main">
         {step === 'welcome' ? <section className="ink-hero">
@@ -210,7 +209,7 @@ export function InkBooth() {
               <Button size="lg" onClick={() => go('camera')}>Continue to camera <ArrowRight data-icon="inline-end" /></Button>
             </div>
           </>}
-          {step === 'camera' && <InkCamera minimumPhotos={layout.count} onTimeout={reset} onBack={() => go('design')} onFinish={(result) => { setShots(result); setSelected([]); go('select'); }} />}
+          {step === 'camera' && <InkCamera layout={layout} framed={frame?.kind === 'preset'} onTimeout={reset} onBack={() => go('design')} onFinish={(result) => { setShots(result); setSelected([]); go('select'); }} />}
           {step === 'select' && <>
             <p className="m-0 text-muted-foreground" role="status">{selected.length} of {layout.count} selected. Tap in print order. The timer fills any open spots in capture order.</p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

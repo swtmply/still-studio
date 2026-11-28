@@ -1,22 +1,17 @@
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { BlobPreconditionFailedError, copy, del, put } from '@vercel/blob';
 import sharp from 'sharp';
 import { FRAME_LIMIT, FRAME_PREFIX, frameInfo, listUploadedFrames, NO_STORE, sameOrigin } from '@/lib/ink-blob';
 import { findPreset, listFrames, setPresetName } from '@/lib/ink-frame-library';
 import { FRAME_MAX_BYTES, inkLayout, POSTCARD, type InkLayout } from '@/lib/ink-layouts';
 import { errorResponse, readForm, shareError } from '@/lib/shares';
+import { hasAdminSession } from '@/lib/ink-admin';
 
 const pngOptions = { access: 'private', contentType: 'image/png' } satisfies Parameters<typeof put>[2];
 
-function requireAdmin(request: Request) {
+async function requireAdmin(request: Request) {
   sameOrigin(request);
-  const secret = process.env.INK_ADMIN_TOKEN;
-  if (!secret || secret.length < 32) throw shareError('Frame management has not been configured.', 503);
-  const supplied = Buffer.from(request.headers.get('authorization') ?? '');
-  const expected = Buffer.from('Bearer ' + secret);
-  if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) {
-    throw shareError('The admin key is incorrect.', 401);
-  }
+  if (!await hasAdminSession()) throw shareError('Unlock the dashboard to manage frames.', 401);
 }
 
 function frameName(form: FormData) {
@@ -77,7 +72,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    requireAdmin(request);
+    await requireAdmin(request);
     const form = await readForm(request);
     const layout = inkLayout(form.get('layout'));
     const name = frameName(form);
@@ -92,7 +87,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    requireAdmin(request);
+    await requireAdmin(request);
     const id = new URL(request.url).searchParams.get('id');
     const form = await readForm(request);
     const name = frameName(form);
@@ -126,7 +121,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    requireAdmin(request);
+    await requireAdmin(request);
     const id = new URL(request.url).searchParams.get('id');
     const preset = findPreset(id);
     if (preset) await setPresetName(preset.id, null);

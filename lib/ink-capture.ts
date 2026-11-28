@@ -16,7 +16,7 @@ function cameraCanvas(video: HTMLVideoElement, width: number) {
   return { canvas, context };
 }
 
-export async function captureInkShot(video: HTMLVideoElement, shutterAt: number, signal: AbortSignal, onShutter: () => void): Promise<InkShot> {
+export async function captureInkShot(video: HTMLVideoElement, shutterAt: number, signal: AbortSignal, onShutter: (photo: string) => void): Promise<InkShot> {
   await delay(Math.max(0, shutterAt - performance.now() - 1500), signal);
   if (video.readyState < 2) throw new Error('The camera stopped responding. Start the camera again.');
   const sample = cameraCanvas(video, 240);
@@ -32,7 +32,7 @@ export async function captureInkShot(video: HTMLVideoElement, shutterAt: number,
       const still = cameraCanvas(video, Math.min(video.videoWidth, 1600));
       still.context.drawImage(video, 0, 0, still.canvas.width, still.canvas.height);
       photo = still.canvas.toDataURL('image/jpeg', 0.92);
-      onShutter();
+      onShutter(photo);
     }
   }
   return { photo, frames };
