@@ -187,6 +187,7 @@ export function InkBooth() {
         {step === 'welcome' && <a className="ink-wordmark" href="/">Moments <em>in Ink</em></a>}
         {step !== 'welcome' && <span className="ink-wordmark">Moments <em>in Ink</em></span>}
         {step !== 'camera' && <InkScreenTimer key={step} onExpire={advance} />}
+        {step === 'welcome' && <Button asChild variant="outline"><a href="/dashboard">Dashboard</a></Button>}
       </header>
       <main className="ink-main">
         {step === 'welcome' ? <section className="ink-hero">
