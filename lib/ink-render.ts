@@ -55,21 +55,24 @@ export function drawInkPreset(canvas: HTMLCanvasElement, design: string, layout:
   context.clip();
   const textShiftX = 2 * width / POSTCARD.millimeters.width;
   const textShiftY = 2 * height / POSTCARD.millimeters.height;
+  const leftTextX = presetSpacing.margin + textShiftX;
+  const rightTextX = width - leftTextX;
   const footerTextY = height - presetSpacing.bottom - textShiftY;
   context.fillStyle = frame.ink;
   context.font = 'bold 24px Arial';
   context.textAlign = 'left';
   const headerBaseline = presetSpacing.top * 0.64 + textShiftY;
-  context.fillText('MOMENTS IN INK', presetSpacing.margin + textShiftX, headerBaseline);
+  context.fillText('MOMENTS IN INK', leftTextX, headerBaseline);
   context.textAlign = 'right';
-  context.fillText(`${layout.count} LITTLE MOMENT${layout.count === 1 ? '' : 'S'}`, width - presetSpacing.margin - textShiftX, headerBaseline);
-  context.textAlign = 'center';
+  context.fillText(`${layout.count} LITTLE MOMENT${layout.count === 1 ? '' : 'S'}`, rightTextX, headerBaseline);
+  context.textAlign = 'left';
   context.font = 'bold 76px Georgia';
-  context.fillText(`Moments in Ink${frame.motif ? ' ' + frame.motif : ''}`, width / 2, footerTextY + 88);
+  context.fillText(`Moments in Ink${frame.motif ? ' ' + frame.motif : ''}`, leftTextX, footerTextY + 88, width / 2 - leftTextX);
   context.font = '24px Arial';
-  context.fillText('A MOMENT TO KEEP', width / 2, footerTextY + 133);
+  context.fillText('A MOMENT TO KEEP', leftTextX, footerTextY + 133);
+  context.textAlign = 'right';
   context.font = '20px Arial';
-  context.fillText(dateLabel(new Date()), width / 2, footerTextY + 178);
+  context.fillText(dateLabel(new Date()), rightTextX, footerTextY + 133);
   context.restore();
 }
 
